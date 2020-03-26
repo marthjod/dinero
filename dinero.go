@@ -56,7 +56,7 @@ func NewClient(appID, baseCurrency string, expiry time.Duration) *Client {
 	store := cache.New(expiry, 10*time.Minute)
 
 	// Init services.
-	c.Rates = NewRatesService(c, baseCurrency)
+	c.Rates = NewRatesService(c)
 	c.Currencies = NewCurrenciesService(c)
 	c.Cache = NewCacheService(c, store)
 
@@ -68,7 +68,7 @@ func NewClient(appID, baseCurrency string, expiry time.Duration) *Client {
 func (c *Client) NewRequest(method, urlPath string, body interface{}) (*http.Request, error) {
 	// Parse our URL.
 	rel, err := url.Parse(
-		fmt.Sprintf("/api/%s&app_id=%s", urlPath, c.AppID),
+		fmt.Sprintf("/api/%s?app_id=%s", urlPath, c.AppID),
 	)
 	if err != nil {
 		return nil, err

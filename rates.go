@@ -2,7 +2,6 @@ package dinero
 
 import (
 	"errors"
-	"fmt"
 )
 
 const (
@@ -18,11 +17,9 @@ type RatesService struct {
 // NewRatesService creates a new handler for this service.
 func NewRatesService(
 	client *Client,
-	baseCurrency string,
 ) *RatesService {
 	return &RatesService{
-		client,
-		baseCurrency,
+		client: client,
 	}
 }
 
@@ -42,7 +39,7 @@ func (s *RatesService) List() (*RateResponse, error) {
 	}
 
 	// No cached results, go and fetch them.
-	if err := s.Update(s.baseCurrency); err != nil {
+	if err := s.Update(); err != nil {
 		return nil, err
 	}
 
@@ -64,7 +61,7 @@ func (s *RatesService) Get(code string) (*float64, error) {
 	}
 
 	// No cached results, go and fetch them.
-	if err := s.Update(s.baseCurrency); err != nil {
+	if err := s.Update(); err != nil {
 		return nil, err
 	}
 
@@ -72,15 +69,11 @@ func (s *RatesService) Get(code string) (*float64, error) {
 }
 
 // Update will update the rates for the given currency from OXR.
-func (s *RatesService) Update(base string) error {
-	if base == "" {
-		return errors.New("base currency provided cannot be empty")
-	}
-
+func (s *RatesService) Update() error {
 	// Build request.
 	request, err := s.client.NewRequest(
 		"GET",
-		fmt.Sprintf("%s?base=%s", latestAPIPath, base),
+		latestAPIPath,
 		nil,
 	)
 	if err != nil {
@@ -89,9 +82,11 @@ func (s *RatesService) Update(base string) error {
 
 	// Make request
 	latest := &RateResponse{}
-	if _, err = s.client.Do(request, latest); err != nil {
+	if _, err := s.client.Do(request, latest); err != nil {
 		return err
 	}
+
+	s.SetBaseCurrency(latest.Base)
 
 	// Store our results.
 	s.client.Cache.Store(latest)
