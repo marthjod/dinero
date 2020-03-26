@@ -1,4 +1,4 @@
-module github.com/mattevans/dinero
+module github.com/marthjod/dinero
 
 go 1.12
 
